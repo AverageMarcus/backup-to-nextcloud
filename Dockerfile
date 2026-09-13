@@ -3,7 +3,7 @@ WORKDIR /app/
 ADD go.mod go.sum ./
 RUN go mod download
 ADD . .
-RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-w -s" -o backup-to-nextcloud main.go
+RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-w -s" -o backup-to-nextcloud .
 
 FROM golang:1.27-alpine
 WORKDIR /app/
