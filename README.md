@@ -10,7 +10,9 @@ Designed to be run as a CronJob with a focus on directories containing backup ar
 * Optionally clean up files on Nextcloud older than a given age
 * Optionally only store the latest X number of files
 
-## Example Config
+## Usage
+
+### Example Config
 
 ```yaml
 nextcloudURL: https://nextcloud.example.com
@@ -25,12 +27,77 @@ jobs:
 
 By default, this loads from `./config.yaml` but the file path can be specified by setting the `NEXTCLOUD_CONFIG_PATH` environment variable.
 
-## Credentials
+### Credentials
 
 Generate an app password for your user in Nextcloud then populate the following environment variables:
 
 * `NEXTCLOUD_USER`
 * `NEXTCLOUD_PASSWORD`
+
+### Example Kubernetes CronJob
+
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-to-nextcloud
+  labels:
+    app.kubernetes.io/name: backup-to-nextcloud
+spec:
+  schedule: "30 11 * * *" # Run every day at 11:30 AM
+  jobTemplate:
+    metadata:
+      labels:
+        cronjob: backup-to-nextcloud
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup
+            image: rg.fr-par.scw.cloud/averagemarcus/backup-to-nextcloud:latest
+            imagePullPolicy: IfNotPresent
+            env:
+              - name: NEXTCLOUD_CONFIG_PATH
+                value: /config/config.yaml
+            envFrom:
+              - secretRef:
+                  name: backup-to-nextcloud-credentials
+            volumeMounts:
+            - mountPath: /backup
+              name: backup-source
+            - mountPath: /config
+              name: config
+          restartPolicy: OnFailure
+          volumes:
+          - name: backup-source
+            persistentVolumeClaim:
+              claimName: source-to-backup
+          - name: config
+            configMap:
+              name: backup-to-nextcloud-jobs
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-to-nextcloud-jobs
+data:
+  config.yaml: |
+    nextcloudURL: https://nextcloud.example.com
+    jobs:
+      - sourceDirectory: /backup/app1
+        destinationDirectory: /backup/app1
+        maxAge: 168h
+        maxItems: 7
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backup-to-nextcloud-credentials
+stringData:
+  NEXTCLOUD_USER: XXXX
+  NEXTCLOUD_PASSWORD: XXXX
+
+```
 
 ## Building from source
 
@@ -61,3 +128,4 @@ Thank you 💛
 ## License
 
 See [LICENSE](LICENSE)
+
