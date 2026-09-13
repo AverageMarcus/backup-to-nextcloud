@@ -1,14 +1,36 @@
 # backup-to-nextcloud
 
-A simple application that will backup files to Nextcloud
+A simple application that will backup files to Nextcloud.
+
+Designed to be run as a CronJob with a focus on directories containing backup archives (e.g. daily zip files).
 
 ## Features
 
-## Install
+* Define jobs via yaml config
+* Optionally clean up files on Nextcloud older than a given age
+* Optionally only store the latest X number of files
 
-```sh
+## Example Config
 
+```yaml
+nextcloudURL: https://nextcloud.example.com
+jobs:
+  - sourceDirectory: backups/example-daily
+    destinationDirectory: backups/example
+    # Optional
+    maxAge: 168h # 7 days
+    # Optional
+    maxItems: 7
 ```
+
+By default, this loads from `./config.yaml` but the file path can be specified by setting the `NEXTCLOUD_CONFIG_PATH` environment variable.
+
+## Credentials
+
+Generate an app password for your user in Nextcloud then populate the following environment variables:
+
+* `NEXTCLOUD_USER`
+* `NEXTCLOUD_PASSWORD`
 
 ## Building from source
 
@@ -25,6 +47,8 @@ make build
 ```
 
 ## Resources
+
+* [Nextcloud WebDav docs](https://docs.nextcloud.com/server/stable/developer_manual/client_apis/WebDAV/basic.html)
 
 ## Contributing
 
